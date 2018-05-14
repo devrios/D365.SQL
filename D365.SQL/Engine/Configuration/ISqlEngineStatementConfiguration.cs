@@ -6,7 +6,7 @@ namespace D365.SQL.Engine.Configuration
     internal interface ISqlEngineStatementConfiguration<T>
         where T : IStatement
     {
-        IEnumerable<IStatementParser<T>> Parsers();
+        IEnumerable<IStatementTokenParser<T>> Parsers();
 
         IEnumerable<SqlStatementRule> Rules();
     }

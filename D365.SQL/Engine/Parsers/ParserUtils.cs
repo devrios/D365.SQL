@@ -27,12 +27,23 @@
                     {
                         inQuotes = !inQuotes;
 
-                        if (inQuotes && char.IsLetter(sql[i - 1]))
+                        if (inQuotes)
                         {
+                            if (sql[i - 1] != ' ')
+                            {
+                                yield return sb.ToString();
+                                sb.Clear();
+                            }
+                        }
+                        else
+                        {
+                            sb.Append(c);
                             yield return sb.ToString();
                             sb.Clear();
+                            continue;
                         }
                     }
+
                     sb.Append(c);
                 }
                 else
@@ -52,11 +63,24 @@
                             }
                         }
 
+                        if (sb.ToString() == "group")
+                        {
+                            if (sql.Length >= i + 3)
+                            {
+                                var str = sql.Substring(i + 1, 2);
+                                if (str == "by")
+                                {
+                                    sb.Append(" by");
+                                    i += 3;
+                                }
+                            }
+                        }
+
                         yield return sb.ToString();
                         sb.Clear();
                     }
 
-                    if (c != ' ')
+                    if (c != ' ' && char.IsWhiteSpace(c) == false)
                         yield return c.ToString();
                 }
             }
@@ -71,6 +95,7 @@
         {
             var columns = new List<List<string>>();
             List<string> list = null;
+            var parenthesesCount = 0;
 
             for (int i = 0; i < words.Count; i++)
             {
@@ -79,7 +104,17 @@
                     list = new List<string>();
                 }
 
-                if (words[i] == ",")
+                if (words[i] == "(")
+                {
+                    parenthesesCount++;
+                }
+
+                if (words[i] == ")")
+                {
+                    parenthesesCount--;
+                }
+
+                if (parenthesesCount == 0 && words[i] == ",")
                 {
                     columns.Add(list);
                     list = null;

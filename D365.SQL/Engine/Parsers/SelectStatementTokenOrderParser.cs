@@ -5,12 +5,15 @@ namespace D365.SQL.Engine.Parsers
     using DML.Select;
     using DML.Select.Order;
 
-    internal class SelectStatementOrderParser : IStatementParser<SelectStatement>
+    internal class SelectStatementTokenOrderParser : IStatementTokenParser<SelectStatement>
     {
         public string TokenPath => "select.order by";
 
-        public TokenParserResults Parse(SelectStatement selectStatement, string args)
+        public TokenParserResults Parse(ParseArgs<SelectStatement> parseArgs)
         {
+            var selectStatement = parseArgs.Statement;
+            var args = parseArgs.StatementArgs;
+
             var results = new TokenParserResults();
 
             var words = ParserUtils.GetWords(args).ToList();

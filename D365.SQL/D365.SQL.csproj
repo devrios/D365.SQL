@@ -33,6 +33,10 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.Crm.Sdk.Proxy, Version=9.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CrmSdk.CoreAssemblies.9.0.2.3\lib\net452\Microsoft.Crm.Sdk.Proxy.dll</HintPath>
       <Private>True</Private>
@@ -58,19 +62,30 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SqlEngineSettings.cs" />
     <Compile Include="Common\DomainExtensions.cs" />
+    <Compile Include="DML\Select\Columns\InnerSelectColumn.cs" />
+    <Compile Include="DML\Select\Columns\SQLFunction.cs" />
     <Compile Include="DML\Select\DeleteStatement.cs" />
+    <Compile Include="DML\Select\Joins\SelectJoinBase.cs" />
+    <Compile Include="DML\Select\Joins\SelectJoinsTypeEnum.cs" />
     <Compile Include="DML\Select\UpdateStatement.cs" />
     <Compile Include="DML\Select\Where\SelectWhereLike.cs" />
     <Compile Include="DML\Select\Where\SelectWhereNull.cs" />
+    <Compile Include="D365\CRMEntityField.cs" />
+    <Compile Include="D365\CRMInstance.cs" />
     <Compile Include="Engine\DataItem.cs" />
+    <Compile Include="D365\MetadataManager.cs" />
+    <Compile Include="Engine\Parsers\IStatementsParser.cs" />
+    <Compile Include="Engine\Parsers\ParseArgs.cs" />
     <Compile Include="Engine\Parsers\ParserUtils.cs" />
-    <Compile Include="Engine\Parsers\IStatementParser.cs" />
+    <Compile Include="Engine\Parsers\IStatementTokenParser.cs" />
+    <Compile Include="Engine\Parsers\ParseStatements.cs" />
     <Compile Include="Engine\Parsers\Result.cs" />
-    <Compile Include="Engine\Parsers\SelectStatementFromParser.cs" />
-    <Compile Include="Engine\Parsers\SelectStatementOrderParser.cs" />
-    <Compile Include="Engine\Parsers\SelectStatementSelectParser.cs" />
-    <Compile Include="Engine\Parsers\SelectStatementWhereParser.cs" />
+    <Compile Include="Engine\Parsers\SelectStatementTokenFromParser.cs" />
+    <Compile Include="Engine\Parsers\SelectStatementTokenOrderParser.cs" />
+    <Compile Include="Engine\Parsers\SelectStatementTokenSelectParser.cs" />
+    <Compile Include="Engine\Parsers\SelectStatementTokenWhereParser.cs" />
     <Compile Include="Engine\Parsers\SqlStatementError.cs" />
     <Compile Include="Engine\Parsers\SqlStatementRule.cs" />
     <Compile Include="Engine\Parsers\TokenParserResults.cs" />

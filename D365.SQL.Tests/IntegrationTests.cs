@@ -12,11 +12,13 @@ namespace D365.SQL.Tests
 
             var engine = new SqlEngine(credential);
 
-            var dsResults = engine.Execute(@"
+            var sql = @"
 select top 5 c.firstname, lastname 'Last Name', emailaddress1 Email 
 from contact as c 
 where emailaddress1 is not null and firstname = 'abc' and emailaddress1 like'%@gmail.com'
-order by c.firstname asc, lastname desc");
+order by c.firstname asc, lastname desc";
+
+            var dsResults = engine.Execute(sql);
             
             Assert.IsNotNull(dsResults);
         }

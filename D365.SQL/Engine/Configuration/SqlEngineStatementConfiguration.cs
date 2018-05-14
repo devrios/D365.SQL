@@ -6,14 +6,14 @@ namespace D365.SQL.Engine.Configuration
 
     internal class SqlEngineStatementConfiguration : ISqlEngineStatementConfiguration<SelectStatement>
     {
-        public IEnumerable<IStatementParser<SelectStatement>> Parsers()
+        public IEnumerable<IStatementTokenParser<SelectStatement>> Parsers()
         {
-            return new IStatementParser<SelectStatement>[]
+            return new IStatementTokenParser<SelectStatement>[]
             {
-                new SelectStatementSelectParser(),
-                new SelectStatementFromParser(),
-                new SelectStatementOrderParser(),
-                new SelectStatementWhereParser(),
+                new SelectStatementTokenSelectParser(),
+                new SelectStatementTokenFromParser(),
+                new SelectStatementTokenOrderParser(),
+                new SelectStatementTokenWhereParser(),
             };
         }
 
@@ -26,7 +26,8 @@ namespace D365.SQL.Engine.Configuration
                 Name = "select",
                 RequiresNextToken = true,
                 Args = true,
-                NextTokens = new List<string>() { "from" }
+                NextTokens = new List<string>() { "from" },
+                EndToken = true // although you can only have raw value or self contained functions
             });
 
             rules.Add(new SqlStatementRule()
@@ -34,15 +35,50 @@ namespace D365.SQL.Engine.Configuration
                 Name = "from",
                 RequiresNextToken = false,
                 Args = true,
-                NextTokens = new List<string>() { "where", "order by" }
+                NextTokens = new List<string>() { "full", "left", "right", "join", "inner", "where", "order by" },
+                EndToken = true
             });
+
+            var joins = new List<string>() { "full", "left", "right", "join", "inner" };
+            var joinsNextTokens = new List<string>() { "full", "left", "right", "join", "inner", "where", "order by" };
+
+            foreach (var join in joins)
+            {
+                rules.Add(new SqlStatementRule()
+                {
+                    Name = join,
+                    RequiresNextToken = false,
+                    Args = true,
+                    NextTokens = joinsNextTokens,
+                    EndToken = true
+                });
+            }
 
             rules.Add(new SqlStatementRule()
             {
                 Name = "where",
                 RequiresNextToken = false,
                 Args = true,
-                NextTokens = new List<string>() { "order by" }
+                NextTokens = new List<string>() { "group by", "order by" },
+                EndToken = true
+            });
+
+            rules.Add(new SqlStatementRule()
+            {
+                Name = "group by",
+                RequiresNextToken = false,
+                Args = true,
+                NextTokens = new List<string>() { "having", "order by" },
+                EndToken = false
+            });
+
+            rules.Add(new SqlStatementRule()
+            {
+                Name = "having",
+                RequiresNextToken = false,
+                Args = true,
+                NextTokens = new List<string>() { "order by" },
+                EndToken = true
             });
 
             rules.Add(new SqlStatementRule()
@@ -50,7 +86,8 @@ namespace D365.SQL.Engine.Configuration
                 Name = "order by",
                 RequiresNextToken = false,
                 Args = true,
-                NextTokens = new List<string>() { }
+                NextTokens = new List<string>() { },
+                EndToken = true
             });
 
             return rules;

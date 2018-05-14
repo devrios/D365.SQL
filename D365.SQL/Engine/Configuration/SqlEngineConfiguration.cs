@@ -4,6 +4,8 @@ namespace D365.SQL.Engine.Configuration
 
     internal class SqlEngineConfiguration : ISqlEngineConfiguration
     {
+        public SqlEngineSettings Settings { get; set; } = new SqlEngineSettings();
+
         public ISqlEngineStatementConfiguration<SelectStatement> SelectStatementConfiguration { get; } = new SqlEngineStatementConfiguration();
     }
 }

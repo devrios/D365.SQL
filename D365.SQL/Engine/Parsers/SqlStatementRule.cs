@@ -11,5 +11,7 @@ namespace D365.SQL.Engine.Parsers
         public bool RequiresNextToken { get; set; }
 
         public List<string> NextTokens { get; set; }
+
+        public bool EndToken { get; set; }
     }
 }

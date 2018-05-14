@@ -4,39 +4,117 @@ namespace D365.SQL.Engine
     using System.Collections.Generic;
     using System.Data;
     using System.Linq;
-    using System.Text.RegularExpressions;
     using Common;
+    using Configuration;
+    using D365;
     using DML.Select;
     using DML.Select.Columns;
     using DML.Select.From;
     using DML.Select.Order;
     using DML.Select.Where;
-    using Microsoft.Xrm.Sdk.Client;
     using Microsoft.Xrm.Sdk.Query;
 
     internal class SelectEngine
     {
-        public SelectEngine(OrganizationServiceProxy service)
+        public SelectEngine(CRMInstance crmInstance, ISqlEngineConfiguration configuration)
         {
-            Service = service;
+            CRMInstance = crmInstance;
+            Configuration = configuration;
         }
-
-        private OrganizationServiceProxy Service { get; set; }
 
         public DataTable Execute(SelectStatement statement)
         {
-            var query = new QueryExpression(((SelectFrom)statement.From.First()).Name);
+            var metadata = new MetadataManager(CRMInstance);
+
+            ValidateStatement(statement);
+
+            var entityName = ((SelectFrom) statement.From.First()).Name;
+
+            var query = new QueryExpression(entityName);
 
             if (statement.Columns.Any())
             {
                 query.ColumnSet = new ColumnSet(false);
 
-                foreach (var column in statement.Columns)
+                // Until caching layer is ready we will retrieve fields every time
+                var entityFields = metadata.GetEntityFields(entityName);
+
+                if (entityFields == null)
                 {
+                    throw new Exception($"Unable to read entity '{entityName}' fields.");
+                }
+
+                if (statement.Columns.Any(x => x.Type.In(SelectColumnTypeEnum.All, SelectColumnTypeEnum.System)))
+                {
+                    for (int i = 0; i < statement.Columns.Count; i++)
+                    {
+                        var column = statement.Columns[i];
+
+                        if (column.Type == SelectColumnTypeEnum.All)
+                        {
+                            foreach (var entityField in entityFields)
+                            {
+                                var fieldSelectColumn = new FieldSelectColumn(entityField.SchemaName);
+
+                                statement.Columns.Insert(i++, fieldSelectColumn);
+                            }
+                        }
+                        else if (column.Type == SelectColumnTypeEnum.System)
+                        {
+                            foreach (var fieldName in Configuration.Settings.SystemSelectFields)
+                            {
+                                if (fieldName.IsEmpty())
+                                {
+                                    throw new Exception($"'{fieldName}' not set.");
+                                }
+
+                                if (string.Equals(fieldName, "$id", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    var idEntityField = entityFields.Single(x => x.IsPrimaryId);
+
+                                    var fieldSelectColumn = new FieldSelectColumn(idEntityField.SchemaName);
+
+                                    statement.Columns.Insert(i++, fieldSelectColumn);
+                                }
+                                else if (string.Equals(fieldName, "$name", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    var nameEntityField = entityFields.Single(x => x.IsPrimaryName);
+
+                                    var fieldSelectColumn = new FieldSelectColumn(nameEntityField.SchemaName);
+
+                                    statement.Columns.Insert(i++, fieldSelectColumn);
+                                }
+                                else if (fieldName.StartsWith("$"))
+                                {
+                                    throw new Exception($"System field '{fieldName}' not supported.");
+                                }
+                                else
+                                {
+                                    var fieldSelectColumn = new FieldSelectColumn(fieldName);
+
+                                    statement.Columns.Insert(i++, fieldSelectColumn);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                for (int i = 0; i < statement.Columns.Count; i++)
+                {
+                    var column = statement.Columns[i];
+
                     if (column.Type == SelectColumnTypeEnum.Field)
                     {
                         var fieldColumn = (FieldSelectColumn) column;
                         query.ColumnSet.AddColumn(fieldColumn.Name);
+                    }
+                    else if (column.Type == SelectColumnTypeEnum.InnerSelect)
+                    {
+                        throw new Exception("Inner selects are currently unsupported.");
+                    }
+                    else if (column.Type == SelectColumnTypeEnum.Function)
+                    {
+                        throw new Exception("Columns with functions are currently unsupported.");
                     }
                 }
             }
@@ -144,10 +222,28 @@ namespace D365.SQL.Engine
 
                         query.AddOrder(columnOrder.Name, direction);
                     }
+                    else if (orderItem.Type == SelectOrderTypeEnum.Position)
+                    {
+                        var columnPosition = (SelectOrderPosition)orderItem;
+                        var direction = orderItem.Direction == OrderDirection.Asc ? OrderType.Ascending : OrderType.Descending;
+
+                        var fieldColumn = statement.Columns[columnPosition.Position - 1] as FieldSelectColumn;
+
+                        if (fieldColumn == null)
+                        {
+                            throw new Exception($"Position '{columnPosition.Position}' must point to a CRM field");
+                        }
+
+                        query.AddOrder(fieldColumn.Name, direction);
+                    }
+                    else
+                    {
+                        throw new Exception($"Unsupported order type '{orderItem.Type}'");
+                    }
                 }
             }
 
-            var entities = Service.RetrieveMultiple(query).Entities.ToList();
+            var entities = CRMInstance.Service.RetrieveMultiple(query).Entities.ToList();
 
             var list = new List<List<KeyValuePair<string, object>>>();
 
@@ -200,7 +296,7 @@ namespace D365.SQL.Engine
             throw new NotSupportedException();
         }
 
-        public DataTable ConvertToDataTable(List<List<KeyValuePair<string, object>>> crmDataItems, List<SelectColumnBase> columns)
+        private DataTable ConvertToDataTable(List<List<KeyValuePair<string, object>>> crmDataItems, List<SelectColumnBase> columns)
         {
             var dt = new DataTable();
 
@@ -246,12 +342,7 @@ namespace D365.SQL.Engine
                     foreach (var rawColumn in rawColumns)
                     {
                         var value = rawColumn.Value;
-
-                        if (rawColumn.Value != null && rawColumn.Value.StartsWith("'") && rawColumn.Value.EndsWith("'"))
-                        {
-                            value = rawColumn.Value.Substring(1, rawColumn.Value.Length - 2);
-                        }
-
+                        
                         row[rawColumn.Label] = value;
                     }
                 }
@@ -259,18 +350,38 @@ namespace D365.SQL.Engine
                 dt.Rows.Add(row);
             }
 
-            // caption is broken in linqpad so we are always using  label as column name
+            // caption is broken in linqpad so we are always using label as column name
             foreach (DataColumn dataColumn in dt.Columns)
             {
-                if (dataColumn.Caption.StartsWith("'") && dataColumn.Caption.EndsWith("'"))
+                if (dataColumn.Caption.IsNotEmpty())
                 {
-                    dataColumn.Caption = dataColumn.Caption.Substring(1, dataColumn.Caption.Length - 2);
-                }
+                    if (dataColumn.Caption.StartsWith("'") && dataColumn.Caption.EndsWith("'"))
+                    {
+                        dataColumn.Caption = dataColumn.Caption.Substring(1, dataColumn.Caption.Length - 2);
+                    }
 
-                dataColumn.ColumnName = dataColumn.Caption;
+                    dataColumn.ColumnName = dataColumn.Caption;
+                }
             }
 
             return dt;
+        }
+
+        private CRMInstance CRMInstance { get; }
+
+        private ISqlEngineConfiguration Configuration { get; }
+
+        private void ValidateStatement(SelectStatement statement)
+        {
+            if (statement.From.Count > 1)
+            {
+                throw new Exception("Multiple 'FROM' are currently unsupported.");
+            }
+
+            if (statement.From.First() is SelectFrom == false)
+            {
+                throw new Exception("Only single entity 'FROM' is supported.");
+            }
         }
     }
 }

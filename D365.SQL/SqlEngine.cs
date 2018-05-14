@@ -17,35 +17,42 @@ namespace D365.SQL
             Credential = credential;
         }
 
+        public SqlEngine(D365Credential credential, SqlEngineSettings settings)
+        {
+            Credential = credential;
+            Configuration.Settings = settings;
+        }
+
         public DataSet Execute(string sql)
         {
-            using (var service = OrganizationService.Create(Credential))
+            var parserManager = new ParserManager(Configuration);
+
+            var parseStatementsResult = parserManager.ParseStatements(sql);
+
+            if (parseStatementsResult.Errors.Any())
             {
-                var parserManager = new ParserManager(Configuration);
+                var sb = new StringBuilder();
 
-                var parseStatementsResult = parserManager.ParseStatements(sql);
-
-                if (parseStatementsResult.Errors.Any())
+                foreach (var error in parseStatementsResult.Errors)
                 {
-                    var sb = new StringBuilder();
-
-                    foreach (var error in parseStatementsResult.Errors)
-                    {
-                        sb.AppendLine($"{error.Message}");
-                    }
-
-                    throw new Exception(sb.ToString());
+                    sb.AppendLine($"{error.Message}");
                 }
 
-                var statements = parseStatementsResult.Value;
+                throw new Exception(sb.ToString());
+            }
 
-                var dataSet = new DataSet();
+            var statements = parseStatementsResult.Value;
 
+            var dataSet = new DataSet();
+
+            using (var service = OrganizationService.Create(Credential))
+            {
                 foreach (var statement in statements)
                 {
                     if (statement is SelectStatement)
                     {
-                        var selectEngine = new SelectEngine(service);
+                        var crmInstance = new CRMInstance(service);
+                        var selectEngine = new SelectEngine(crmInstance, Configuration);
 
                         var selectStatement = (SelectStatement)statement;
 
@@ -62,13 +69,13 @@ namespace D365.SQL
                         throw new NotSupportedException($"'Delete' statement is currently not supported.");
                     }
                 }
-
-                return dataSet;
             }
+
+            return dataSet;
         }
 
-        private ISqlEngineConfiguration Configuration { get; set; } = new SqlEngineConfiguration();
+        private ISqlEngineConfiguration Configuration { get; } = new SqlEngineConfiguration();
 
-        private D365Credential Credential { get; set; }    
+        private D365Credential Credential { get; }    
     }
 }

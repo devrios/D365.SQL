@@ -6,6 +6,7 @@ namespace D365.SQL.DML.Select.Columns
         All = 1,
         System = 2,
         Field = 3,
+        Function = 4,
         InnerSelect = 10,
         Raw = 100,
     }

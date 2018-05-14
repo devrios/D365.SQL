@@ -4,12 +4,15 @@ namespace D365.SQL.Engine.Parsers
     using DML.Select;
     using DML.Select.From;
 
-    internal class SelectStatementFromParser : IStatementParser<SelectStatement>
+    internal class SelectStatementTokenFromParser : IStatementTokenParser<SelectStatement>
     {
         public string TokenPath => "select.from";
 
-        public TokenParserResults Parse(SelectStatement selectStatement, string args)
+        public TokenParserResults Parse(ParseArgs<SelectStatement> parseArgs)
         {
+            var selectStatement = parseArgs.Statement;
+            var args = parseArgs.StatementArgs;
+
             var results = new TokenParserResults();
 
             var words = ParserUtils.GetWords(args).ToList();

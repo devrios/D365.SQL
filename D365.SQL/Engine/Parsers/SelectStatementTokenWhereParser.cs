@@ -7,14 +7,17 @@ namespace D365.SQL.Engine.Parsers
     using DML.Select;
     using DML.Select.Where;
 
-    internal class SelectStatementWhereParser : IStatementParser<SelectStatement>
+    internal class SelectStatementTokenWhereParser : IStatementTokenParser<SelectStatement>
     {
         public string TokenPath => "select.where";
 
         public static Func<string, IEnumerable<string>> GetWords;
 
-        public TokenParserResults Parse(SelectStatement selectStatement, string args)
+        public TokenParserResults Parse(ParseArgs<SelectStatement> parseArgs)
         {
+            var selectStatement = parseArgs.Statement;
+            var args = parseArgs.StatementArgs;
+
             var results = new TokenParserResults();
 
             var words = GetWords != null
@@ -105,7 +108,7 @@ namespace D365.SQL.Engine.Parsers
                 {
                     var comparison = "";
 
-                    for (index = index; index < clauseWords.Count - 1; index++)
+                    for (; index < clauseWords.Count - 1; index++)
                     {
                         comparison += clauseWords[index];
                     }
@@ -176,7 +179,7 @@ namespace D365.SQL.Engine.Parsers
 
                     if (++index < clauseWords.Count)
                     {
-                        throw new Exception("Found unexpected tokens after 'IS' clause.");
+                        throw new Exception("Found unexpected tokens after 'LIKE' clause.");
                     }
 
                     var clause = new SelectWhereLike(leftExpression, rightExpression)
