@@ -62,10 +62,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DML\Select\Joins\SelectJoinTable.cs" />
+    <Compile Include="DML\Select\Joins\TableColumn.cs" />
     <Compile Include="SqlEngineSettings.cs" />
     <Compile Include="Common\DomainExtensions.cs" />
     <Compile Include="DML\Select\Columns\InnerSelectColumn.cs" />
-    <Compile Include="DML\Select\Columns\SQLFunction.cs" />
+    <Compile Include="DML\Select\Columns\SelectColumnFunction.cs" />
     <Compile Include="DML\Select\DeleteStatement.cs" />
     <Compile Include="DML\Select\Joins\SelectJoinBase.cs" />
     <Compile Include="DML\Select\Joins\SelectJoinsTypeEnum.cs" />
