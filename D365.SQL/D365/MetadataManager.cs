@@ -145,11 +145,15 @@ namespace D365.SQL.D365
 
             columns.MoveItemsToStart(
                 (source, destination) => string.Equals(source.Name, destination, StringComparison.OrdinalIgnoreCase),
-                "MetadataId", "SchemaName", "LogicalName", "DisplayName", "Description", "PrimaryIdAttribute", "PrimaryNameAttribute");
+                "MetadataId", "DisplayName", "LogicalName", "SchemaName", "Description", "PrimaryIdAttribute", "PrimaryNameAttribute");
 
             var table = new InMemoryTable(null, columns);
 
-            foreach (var entityMetadata in retrieveAllEntitiesResponse.EntityMetadata)
+            foreach (var entityMetadata in retrieveAllEntitiesResponse
+                .EntityMetadata
+                .OrderBy(x => x.DisplayName != null ? 1 : 2)
+                .ThenBy(x => x.DisplayName?.UserLocalizedLabel != null ? 1 : 2)
+                .ThenBy(x => x.DisplayName?.UserLocalizedLabel?.Label))
             {
                 var row = new InMemoryTableRow();
 
