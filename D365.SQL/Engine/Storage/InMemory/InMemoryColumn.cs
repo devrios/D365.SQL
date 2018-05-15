@@ -1,8 +1,8 @@
-namespace D365.SQL.Engine
+namespace D365.SQL.Engine.Storage.InMemory
 {
-    internal class DataItem
+    internal class InMemoryColumn
     {
-        public DataItem(string key, object value)
+        public InMemoryColumn(string key, object value)
         {
             Key = key;
             Value = value;

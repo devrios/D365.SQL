@@ -22,13 +22,30 @@ namespace D365.SQL.Engine
             Configuration = configuration;
         }
 
-        public DataTable Execute(SelectStatement statement)
+        private DataTable ExecuteInformationSchema(SelectStatement statement)
         {
             var metadata = new MetadataManager(CRMInstance);
 
-            ValidateStatement(statement);
+            var entityName = ((SelectFrom)statement.From.First()).Name;
 
-            var entityName = ((SelectFrom) statement.From.First()).Name;
+            switch (entityName)
+            {
+                case "information_schema.tables":
+
+                    break;
+
+                default:
+                    throw new Exception($"Information Schema '{entityName}' unsupported.");
+            }
+
+            return null;
+        }
+
+        private DataTable ExecuteExpression(SelectStatement statement)
+        {
+            var metadata = new MetadataManager(CRMInstance);
+
+            var entityName = ((SelectFrom)statement.From.First()).Name;
 
             var query = new QueryExpression(entityName);
 
@@ -98,14 +115,14 @@ namespace D365.SQL.Engine
                         }
                     }
                 }
-                
+
                 for (int i = 0; i < statement.Columns.Count; i++)
                 {
                     var column = statement.Columns[i];
 
                     if (column.Type == SelectColumnTypeEnum.Field)
                     {
-                        var fieldColumn = (FieldSelectColumn) column;
+                        var fieldColumn = (FieldSelectColumn)column;
                         query.ColumnSet.AddColumn(fieldColumn.Name);
                     }
                     else if (column.Type == SelectColumnTypeEnum.InnerSelect)
@@ -136,7 +153,7 @@ namespace D365.SQL.Engine
 
                     if (whereClause.Type == SelectWhereTypeEnum.Comparison)
                     {
-                        var comparisonClause = (SelectWhereComparison) whereClause;
+                        var comparisonClause = (SelectWhereComparison)whereClause;
 
                         var conditionName = GetWhereClauseAttributeName(comparisonClause.LeftExpression);
                         var conditionValue = GetWhereClauseAttributeName(comparisonClause.RightExpression);
@@ -263,7 +280,7 @@ namespace D365.SQL.Engine
                             value = entity.FormattedValues[attribute.Key];
                         }
                     }
-                    
+
                     if (value == null)
                     {
                         value = Convert.ToString(attribute.Value);
@@ -275,7 +292,21 @@ namespace D365.SQL.Engine
                 list.Add(values);
             }
 
-            return ConvertToDataTable(list, statement.Columns);
+            return list.ConvertToDataTable(statement.Columns);
+        }
+
+        public DataTable Execute(SelectStatement statement)
+        {
+            ValidateStatement(statement);
+
+            var entityName = ((SelectFrom)statement.From.First()).Name;
+
+            if (entityName.StartsWith("information_schema."))
+            {
+                return ExecuteInformationSchema(statement);
+            }
+
+            return ExecuteExpression(statement);
         }
 
         private string GetWhereClauseAttributeName(SelectWhereColumnBase whereColumn)
@@ -294,77 +325,6 @@ namespace D365.SQL.Engine
             }
 
             throw new NotSupportedException();
-        }
-
-        private DataTable ConvertToDataTable(List<List<KeyValuePair<string, object>>> crmDataItems, List<SelectColumnBase> columns)
-        {
-            var dt = new DataTable();
-
-            foreach (var column in columns)
-            {
-                if (column.Type.In(SelectColumnTypeEnum.All, SelectColumnTypeEnum.System))
-                {
-                    
-                }
-                else
-                {
-                    var name = column.Label;
-
-                    if (column.Type == SelectColumnTypeEnum.Field)
-                    {
-                        var fieldColumn = (FieldSelectColumn)column;
-
-                        name = fieldColumn.Name;
-                    }
-
-                    var dataColumn = dt.Columns.Add(name, column.ValueType);
-
-                    dataColumn.Caption = column.Label;
-                }
-            }
-
-            var rawColumns = columns.Where(x => x.Type == SelectColumnTypeEnum.Raw).Cast<RawSelectColumn>();
-
-            foreach (var crmDataItem in crmDataItems)
-            {
-                var row = dt.NewRow();
-
-                foreach (var crmPair in crmDataItem)
-                {
-                    if (dt.Columns.Contains(crmPair.Key))
-                    {
-                        row[crmPair.Key] = crmPair.Value;
-                    }
-                }
-
-                if (rawColumns.Any())
-                {
-                    foreach (var rawColumn in rawColumns)
-                    {
-                        var value = rawColumn.Value;
-                        
-                        row[rawColumn.Label] = value;
-                    }
-                }
-
-                dt.Rows.Add(row);
-            }
-
-            // caption is broken in linqpad so we are always using label as column name
-            foreach (DataColumn dataColumn in dt.Columns)
-            {
-                if (dataColumn.Caption.IsNotEmpty())
-                {
-                    if (dataColumn.Caption.StartsWith("'") && dataColumn.Caption.EndsWith("'"))
-                    {
-                        dataColumn.Caption = dataColumn.Caption.Substring(1, dataColumn.Caption.Length - 2);
-                    }
-
-                    dataColumn.ColumnName = dataColumn.Caption;
-                }
-            }
-
-            return dt;
         }
 
         private CRMInstance CRMInstance { get; }

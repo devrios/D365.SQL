@@ -1,5 +1,7 @@
 namespace D365.SQL.Common
 {
+    using System;
+
     internal static class LanguageExtensions
     {
         public static bool IsEmpty(this string source)
@@ -28,6 +30,11 @@ namespace D365.SQL.Common
         public static bool NotIn<T>(this T source, params T[] values)
         {
             return !In(source, values);
+        }
+
+        public static bool IsNullable(this Type value)
+        {
+            return Nullable.GetUnderlyingType(value) != null;
         }
     }
 }

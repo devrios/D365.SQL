@@ -62,8 +62,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\DataExtensions.cs" />
     <Compile Include="DML\Select\Joins\SelectJoinTable.cs" />
     <Compile Include="DML\Select\Joins\TableColumn.cs" />
+    <Compile Include="Engine\Storage\InMemory\ColumnInfo.cs" />
+    <Compile Include="Engine\Storage\InMemory\InMemoryTable.cs" />
+    <Compile Include="Engine\Storage\InMemory\InMemoryTableRow.cs" />
     <Compile Include="SqlEngineSettings.cs" />
     <Compile Include="Common\DomainExtensions.cs" />
     <Compile Include="DML\Select\Columns\InnerSelectColumn.cs" />
@@ -76,7 +80,7 @@
     <Compile Include="DML\Select\Where\SelectWhereNull.cs" />
     <Compile Include="D365\CRMEntityField.cs" />
     <Compile Include="D365\CRMInstance.cs" />
-    <Compile Include="Engine\DataItem.cs" />
+    <Compile Include="Engine\Storage\InMemory\InMemoryColumn.cs" />
     <Compile Include="D365\MetadataManager.cs" />
     <Compile Include="Engine\Parsers\IStatementsParser.cs" />
     <Compile Include="Engine\Parsers\ParseArgs.cs" />

@@ -1,5 +1,6 @@
 ﻿namespace D365.SQL.Engine.Parsers
 {
+    using System;
     using System.Collections.Generic;
     using System.Text;
     using DML.Select.Columns;
@@ -21,7 +22,7 @@
                 var c = sql[i];
                 var nextC = i < sql.Length - 2 ? sql[i + 1] : '\0';
 
-                if (char.IsLetterOrDigit(c) || c == '\'' || inQuotes || (c == '.' && i > 0 && i < sql.Length - 1 && char.IsLetter(sql[i - 1]) && char.IsLetter(sql[i + 1])))
+                if (char.IsLetterOrDigit(c) || c == '_' || c == '\'' || inQuotes || (c == '.' && i > 0 && i < sql.Length - 1 && char.IsLetter(sql[i - 1]) && char.IsLetter(sql[i + 1])))
                 {
                     if (c == '\'')
                     {
@@ -164,9 +165,33 @@
 
                 result.Name = parts[parts.Length - 1];
 
+                var isInformationSchema = false;
+
                 if (parts.Length > 1)
                 {
-                    result.Server = parts[parts.Length - 2];
+                    isInformationSchema = string.Equals(parts[parts.Length - 2], "information_schema", StringComparison.OrdinalIgnoreCase);
+                }
+
+                if ((isInformationSchema && parts.Length > 3) || (isInformationSchema == false && parts.Length > 2))
+                {
+                    throw new Exception($"'FROM' clause ('{from}') has too many arguments.");
+                }
+
+                if (isInformationSchema)
+                {
+                    result.Name = "information_schema." + result.Name;
+
+                    if (parts.Length > 2)
+                    {
+                        result.Server = parts[parts.Length - 3];
+                    }
+                }
+                else
+                {
+                    if (parts.Length > 1)
+                    {
+                        result.Server = parts[parts.Length - 2];
+                    }
                 }
             }
 

@@ -10,5 +10,9 @@ namespace D365.SQL
             "createdon", "createdby",
             "modifiedon", "modifiedby"
         };
+
+        public int? MaxRecordsPerQuery { get; set; } = 250;
+
+        public int? PageSize { get; set; } = 5000;
     }
 }
