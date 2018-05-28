@@ -16,11 +16,13 @@ var credential = new D365Credential("instance", "crm4", "username@company.onmicr
 
 var engine = new SqlEngine(credential);
 
-var dataSet = engine.Execute(@"
+var sql = @"
 select top 5 c.firstname, c.lastname 'Last Name', c.emailaddress1 As Email 
 from contact as c 
 where emailaddress1 is not null and firstname = 'abc' and emailaddress1 like'%@gmail.com'
-order by c.firstname asc, lastname desc");
+order by c.firstname asc, lastname desc";
+
+var dataSet = engine.Execute(sql);
 
 Console.WriteLine(dataSet);
 ```
