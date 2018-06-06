@@ -150,19 +150,21 @@
             return dt;
         }
 
-        public static DataTable ConvertToDataTable(this List<List<KeyValuePair<string, object>>> crmDataItems, List<SelectColumnBase> columns)
+        public static DataTable ConvertToDataTable(this List<List<KeyValuePair<string, object>>> crmDataItems, List<SelectColumn> selectColumns)
         {
             var dt = new DataTable();
 
-            foreach (var column in columns)
+            foreach (var selectColumn in selectColumns)
             {
+                var column = selectColumn.Column;
+
                 if (column.Type.In(SelectColumnTypeEnum.All, SelectColumnTypeEnum.System))
                 {
 
                 }
                 else
                 {
-                    var name = column.Label;
+                    var name = selectColumn.Label;
 
                     if (column.Type == SelectColumnTypeEnum.Field)
                     {
@@ -173,11 +175,11 @@
 
                     var dataColumn = dt.Columns.Add(name, column.ValueType);
 
-                    dataColumn.Caption = column.Label;
+                    dataColumn.Caption = selectColumn.Label;
                 }
             }
 
-            var rawColumns = columns.Where(x => x.Type == SelectColumnTypeEnum.Raw).Cast<RawSelectColumn>();
+            var rawColumns = selectColumns.Where(x => x.Column.Type == SelectColumnTypeEnum.Raw);
 
             foreach (var crmDataItem in crmDataItems)
             {
@@ -193,11 +195,12 @@
 
                 if (rawColumns.Any())
                 {
-                    foreach (var rawColumn in rawColumns)
+                    foreach (var column in rawColumns)
                     {
+                        var rawColumn = (RawSelectColumn) column.Column;
                         var value = rawColumn.Value;
 
-                        row[rawColumn.Label] = value;
+                        row[column.Label] = value;
                     }
                 }
 

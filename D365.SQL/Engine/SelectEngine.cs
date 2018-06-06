@@ -60,12 +60,13 @@ namespace D365.SQL.Engine
                 {
                     throw new Exception($"Unable to read entity '{entityName}' fields.");
                 }
-
-                if (statement.Columns.Any(x => x.Type.In(SelectColumnTypeEnum.All, SelectColumnTypeEnum.System)))
+                
+                if (statement.Columns.Any(x => x.Column.Type.In(SelectColumnTypeEnum.All, SelectColumnTypeEnum.System)))
                 {
                     for (int i = 0; i < statement.Columns.Count; i++)
                     {
-                        var column = statement.Columns[i];
+                        var selectColumn = statement.Columns[i];
+                        var column = selectColumn.Column;
 
                         if (column.Type == SelectColumnTypeEnum.All)
                         {
@@ -73,7 +74,7 @@ namespace D365.SQL.Engine
                             {
                                 var fieldSelectColumn = new FieldSelectColumn(entityField.SchemaName);
 
-                                statement.Columns.Insert(i++, fieldSelectColumn);
+                                statement.Columns.Insert(i++, new SelectColumn(fieldSelectColumn, null));
                             }
                         }
                         else if (column.Type == SelectColumnTypeEnum.System)
@@ -91,7 +92,7 @@ namespace D365.SQL.Engine
 
                                     var fieldSelectColumn = new FieldSelectColumn(idEntityField.SchemaName);
 
-                                    statement.Columns.Insert(i++, fieldSelectColumn);
+                                    statement.Columns.Insert(i++, new SelectColumn(fieldSelectColumn, null));
                                 }
                                 else if (string.Equals(fieldName, "$name", StringComparison.OrdinalIgnoreCase))
                                 {
@@ -99,7 +100,7 @@ namespace D365.SQL.Engine
 
                                     var fieldSelectColumn = new FieldSelectColumn(nameEntityField.SchemaName);
 
-                                    statement.Columns.Insert(i++, fieldSelectColumn);
+                                    statement.Columns.Insert(i++, new SelectColumn(fieldSelectColumn, null)); 
                                 }
                                 else if (fieldName.StartsWith("$"))
                                 {
@@ -109,7 +110,7 @@ namespace D365.SQL.Engine
                                 {
                                     var fieldSelectColumn = new FieldSelectColumn(fieldName);
 
-                                    statement.Columns.Insert(i++, fieldSelectColumn);
+                                    statement.Columns.Insert(i++, new SelectColumn(fieldSelectColumn, null));
                                 }
                             }
                         }
@@ -118,7 +119,8 @@ namespace D365.SQL.Engine
 
                 for (int i = 0; i < statement.Columns.Count; i++)
                 {
-                    var column = statement.Columns[i];
+                    var selectColumn = statement.Columns[i];
+                    var column = selectColumn.Column;
 
                     if (column.Type == SelectColumnTypeEnum.Field)
                     {
@@ -244,7 +246,7 @@ namespace D365.SQL.Engine
                         var columnPosition = (SelectOrderPosition)orderItem;
                         var direction = orderItem.Direction == OrderDirection.Asc ? OrderType.Ascending : OrderType.Descending;
 
-                        var fieldColumn = statement.Columns[columnPosition.Position - 1] as FieldSelectColumn;
+                        var fieldColumn = statement.Columns[columnPosition.Position - 1].Column as FieldSelectColumn;
 
                         if (fieldColumn == null)
                         {

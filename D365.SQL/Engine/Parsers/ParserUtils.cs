@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Text;
+    using Common;
     using DML.Select.Columns;
     using DML.Select.From;
 
@@ -10,11 +11,17 @@
     {
         public static IEnumerable<string> GetWords(string sql)
         {
+            if (sql.IsEmpty())
+            {
+                yield break;
+            }
+
             var sb = new StringBuilder();
 
             sql = sql.Trim();
 
             var inQuotes = false;
+            var inSquareBrackets = false;
 
             for (int i = 0; i < sql.Length; i++)
             {
@@ -22,7 +29,46 @@
                 var c = sql[i];
                 var nextC = i < sql.Length - 2 ? sql[i + 1] : '\0';
 
-                if (char.IsLetterOrDigit(c) || c == '_' || c == '\'' || inQuotes || (c == '.' && i > 0 && i < sql.Length - 1 && char.IsLetter(sql[i - 1]) && char.IsLetter(sql[i + 1])))
+                if (c == '[' || c == ']' || inSquareBrackets)
+                {
+                    if (inSquareBrackets == false && sb.Length > 0 && c == '[')
+                    {
+                        if (i >= 2 && sql[i - 1] == '.' && char.IsLetter(sql[i - 2]) && char.IsLetter(sql[i + 1]))
+                        {
+                            // carry on, this is an alias + column combination
+                        }
+                        else
+                        {
+                            yield return sb.ToString();
+                            sb.Clear();
+                        }
+                    }
+
+                    sb.Append(c);
+
+                    if (c == '[')
+                    {
+                        inSquareBrackets = true;
+                    }
+
+                    if (c == ']')
+                    {
+                        yield return sb.ToString();
+                        sb.Clear();
+
+                        inSquareBrackets = false;
+                    }
+                }
+                else if (char.IsLetterOrDigit(c) || c == '_' || c == '\'' || inQuotes 
+                    || (c == '.' && i > 0 && i < sql.Length - 2 && (// column with alias or double
+                                (char.IsLetter(sql[i - 1]) && sql[i + 1] == '[') // a.[ -- column with alias
+                                ||
+                                (char.IsLetter(sql[i - 1]) && char.IsLetter(sql[i + 1])) // a.b -- column with alias
+                                || 
+                                (char.IsNumber(sql[i - 1]) && char.IsNumber(sql[i + 1])) // 1.2 -- double
+                            )
+                        )
+                    )
                 {
                     if (c == '\'')
                     {
@@ -30,7 +76,7 @@
 
                         if (inQuotes)
                         {
-                            if (sql[i - 1] != ' ')
+                            if (i > 0 && sql[i - 1] != ' ' && sb.Length > 0)
                             {
                                 yield return sb.ToString();
                                 sb.Clear();
@@ -139,7 +185,7 @@
             {
                 var parts = column.Split('.');
 
-                result.Column = parts[parts.Length - 1];
+                result.Column = parts[parts.Length - 1].CleanRaw();
 
                 if (parts.Length > 2)
                 {
@@ -163,7 +209,7 @@
             {
                 var parts = from.Split('.');
 
-                result.Name = parts[parts.Length - 1];
+                result.Name = parts[parts.Length - 1].CleanRaw();
 
                 var isInformationSchema = false;
 

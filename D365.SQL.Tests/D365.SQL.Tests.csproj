@@ -59,6 +59,12 @@
   </Choose>
   <ItemGroup>
     <Compile Include="IntegrationTests.cs" />
+    <Compile Include="Parser\GetWords\GetWordsColumnsTests.cs" />
+    <Compile Include="Parser\GetWords\GetWordsItem.cs" />
+    <Compile Include="Parser\GetWords\GetWordsSelectTests.cs" />
+    <Compile Include="Parser\GetWords\GetWordsTestsBase.cs" />
+    <Compile Include="Parser\Select\ParseColumnTests.cs" />
+    <Compile Include="Parser\Select\SelectStatementParserTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -67,6 +73,7 @@
       <Name>D365.SQL</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

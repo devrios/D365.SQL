@@ -1,12 +1,7 @@
 namespace D365.SQL.DML.Select.Columns
 {
-    internal class SystemSelectColumn : SelectColumnBase
+    internal class SystemSelectColumn : ColumnBase
     {
-        public SystemSelectColumn()
-            : base(null)
-        {
-        }
-
         public override SelectColumnTypeEnum Type => SelectColumnTypeEnum.System;
     }
 }

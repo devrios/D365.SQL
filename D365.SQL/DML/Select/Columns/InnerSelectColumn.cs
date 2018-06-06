@@ -1,9 +1,8 @@
 namespace D365.SQL.DML.Select.Columns
 {
-    internal class InnerSelectColumn : SelectColumnBase
+    internal class InnerSelectColumn : ColumnBase
     {
-        public InnerSelectColumn(string label, SelectStatement selectStatement)
-            : base(label)
+        public InnerSelectColumn(SelectStatement selectStatement)
         {
             SelectStatement = selectStatement;
         }

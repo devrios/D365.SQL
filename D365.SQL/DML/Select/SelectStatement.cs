@@ -12,7 +12,7 @@ namespace D365.SQL.DML.Select
     {
         public SelectStatement()
         {
-            Columns = new List<SelectColumnBase>();
+            Columns = new List<SelectColumn>();
             From = new List<SelectFromBase>();
             Joins = new List<SelectJoinBase>();
             Where = new List<SelectWhereBase>();
@@ -21,7 +21,7 @@ namespace D365.SQL.DML.Select
 
         public int? Top { get; set; }
 
-        public List<SelectColumnBase> Columns { get; set; }
+        public List<SelectColumn> Columns { get; set; }
 
         public List<SelectFromBase> From { get; set; }
 

@@ -2,15 +2,9 @@ namespace D365.SQL.DML.Select.Columns
 {
     using Engine.Parsers;
 
-    internal class FieldSelectColumn : SelectColumnBase
+    internal class FieldSelectColumn : ColumnBase
     {
         public FieldSelectColumn(string name)
-            : this(name, name)
-        {
-        }
-
-        public FieldSelectColumn(string label, string name)
-            : base(label)
         {
             var parsedName = name.ParseColumn();
             

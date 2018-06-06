@@ -14,12 +14,22 @@ namespace D365.SQL.Common
                 return text.Substring(1, text.Length - 2);
             }
 
+            if (text.StartsWith("[") && text.EndsWith("]"))
+            {
+                return text.Substring(1, text.Length - 2);
+            }
+
             return text;
         }
 
         public static bool IsQuoted(this string text)
         {
             return text.StartsWith("'") && text.EndsWith("'");
+        }
+
+        public static bool IsSquareBrackets(this string text)
+        {
+            return text.StartsWith("[") && text.EndsWith("]");
         }
     }
 }

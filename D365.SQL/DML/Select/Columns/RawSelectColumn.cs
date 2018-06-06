@@ -1,9 +1,8 @@
 namespace D365.SQL.DML.Select.Columns
 {
-    internal class RawSelectColumn : SelectColumnBase
+    internal class RawSelectColumn : ColumnBase
     {
-        public RawSelectColumn(string label, object value)
-            : base(label)
+        public RawSelectColumn(object value)
         {
             Value = value;
         }

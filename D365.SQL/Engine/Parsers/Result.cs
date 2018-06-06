@@ -11,6 +11,11 @@ namespace D365.SQL.Engine.Parsers
             Value = value;
         }
 
+        public Result(List<TError> errors)
+        {
+            Errors = errors;
+        }
+
         public TValue Value { get; }
 
         public List<TError> Errors

@@ -36,5 +36,10 @@ namespace D365.SQL.Common
         {
             return Nullable.GetUnderlyingType(value) != null;
         }
+
+        public static T As<T>(this object src)
+        {
+            return (T) src;
+        }
     }
 }
